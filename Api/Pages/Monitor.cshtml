@@ -1,0 +1,42 @@
+﻿@page
+@{
+    Layout = null;
+}
+
+    <h3><label><input type="checkbox" id="logCheckBox" checked="checked">实时更新</label></h3>
+<article id="result"></article>
+
+<script>
+    function b64DecodeUnicode(str) {
+        return decodeURIComponent(atob(str).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    }
+
+    if (typeof (EventSource) == "undefined") {
+        document.getElementById("result").innerHTML = "您的浏览器不支持server-sent事件...";
+    }
+    else {
+        //创建一个新的 EventSource 对象，规定发送更新的页面的 URL
+        var source = new EventSource("../Sys/ServerSentEvents3");
+
+        //默认支持open事件
+        source.onopen = function (event) {
+            //console.log(event);
+        };
+
+        //默认支持error事件
+        source.onerror = function (event) {
+            //console.log(event);
+        };
+
+        //默认支持message事件
+        source.onmessage = function (event) {
+            if (!document.getElementById("logCheckBox").checked) return;
+            var log = b64DecodeUnicode(event.data);
+            if (log == "") return;
+            document.getElementById("result").innerHTML = log + "</br></br></br>" + document.getElementById("result").innerHTML;
+        };
+    }
+</script>
+

@@ -1,0 +1,366 @@
+﻿<#@ template debug="True" hostspecific="true" language="C#"  #>
+<#@ assembly name="System.Core"#>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.xml" #>
+<#@ assembly name="$(SolutionDir)\Lib\DLL\MySql.Data.Dll"  #>
+<#@ import namespace="System"#>
+<#@ import namespace="System.Collections.Generic"#>
+<#@ import namespace="System.Data"#>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Data.SqlClient"#>
+<#@ import namespace="MySql.Data.MySqlClient"#>
+<#+  
+	public class EntityHelper
+    {
+	    //public static string ConnectionString = @"Data Source=120.78.161.123;Database=ModobayDB_Test_V4;user id=sa;password=!!597ORG!!ert987??!!;Connect Timeout=900000;"; 
+        public static string ConnectionString = @"Data Source=127.0.0.1;Database=Agency;user id=sa;password=sa;Connect Timeout=900000;"; 
+        public static List<Entity> GetTableComment(string connectionString, string inOrNot,string tables)
+        {
+            var list = new List<Entity>();
+            var conn = new SqlConnection(connectionString);
+            try
+            {
+                conn.Open(); 
+                var sql = $@"select a.name TABLE_NAME,CONVERT(NVARCHAR(100),isnull(g.[value],'-')) TABLE_COMMENT
+											from sys.tables a 
+											left join sys.extended_properties g on (a.object_id = g.major_id AND g.minor_id = 0)
+											WHERE (a.NAME {inOrNot} ({tables}))";
+				var cmd = conn.CreateCommand();
+				cmd.CommandText = sql;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    { 
+                        var table = reader["TABLE_NAME"].ToString(); 
+						var tablecommnet = reader["TABLE_COMMENT"].ToString(); 
+                        var entity = list.FirstOrDefault(x => x.EntityName == table);
+                        if(entity == null)
+                        {
+                            entity = new Entity(table,tablecommnet); 
+                            list.Add(entity);
+                        } 
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return list;
+        }
+
+
+	   public static List<Entity> GetTables(string connectionString, string inOrNot,string tables)
+        {
+            var list = new List<Entity>();
+            var conn = new SqlConnection(connectionString);
+            try
+            {
+                conn.Open();
+                var sql = $@"SELECT name TABLE_NAME FROM sys.tables WHERE (NAME {inOrNot} ({tables}))";
+				var cmd = conn.CreateCommand();
+				cmd.CommandText = sql;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var table = reader["TABLE_NAME"].ToString(); 
+                        var entity = list.FirstOrDefault(x => x.EntityName == table);
+                        if(entity == null)
+                        {
+                            entity = new Entity(table); 
+                            list.Add(entity);
+                        } 
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return list;
+        }
+
+
+
+        public static List<Entity> GetEntities(string connectionString, string inOrNot,string tables)
+        {
+            var list = new List<Entity>();
+            var conn = new SqlConnection(connectionString);
+            try
+            {
+                conn.Open();
+                var sql = $@"SELECT '' TABLE_SCHEMA,
+								d.name AS TABLE_NAME,
+								a.name COLUMN_NAME,
+								b.name DATA_TYPE,
+								(
+									CASE
+									WHEN (
+										SELECT
+											COUNT (*)
+										FROM
+											sys.sysobjects   
+										WHERE
+											(
+												name IN (
+													SELECT
+														name
+													FROM
+														sys.sysindexes
+													WHERE
+														(id = a.id)
+													AND (
+														indid IN (
+															SELECT
+																indid
+															FROM
+																sys.sysindexkeys
+															WHERE
+																(id = a.id)
+															AND (
+																colid IN (
+																	SELECT
+																		colid
+																	FROM
+																		sys.syscolumns
+																	WHERE
+																		(id = a.id)
+																	AND (name = a.name)
+																)
+															)
+														)
+													)
+												)
+											)
+										AND (xtype = 'PK')
+									) > 0 THEN
+										'PRI'
+									ELSE
+										''
+									END
+								) AS COLUMN_KEY  
+								,
+								isnull(g. VALUE, '') COLUMN_COMMENT,
+								(
+									CASE
+									WHEN a.isnullable = 1 THEN
+										'YES'
+									ELSE
+										'NO'
+									END
+								) IS_NULLABLE,
+								a.colorder ORDINAL_POSITION,
+								isnull(e. TEXT, '') COLUMN_DEFAULT,
+								columnproperty(a.id, a.name, 'PRECISION') CHARACTER_MAXIMUM_LENGTH,
+								(
+									CASE
+									WHEN columnproperty(a.id, a.name, 'IsIdentity') = 1 THEN
+										'auto_increment'
+									ELSE
+										''
+									END
+								) EXTRA
+							FROM
+								sys.syscolumns a
+							LEFT JOIN sys.systypes b ON a.xtype = b.xusertype
+							INNER JOIN sys.sysobjects d ON a.id = d.id
+							AND d.xtype = 'U'
+							AND d.name <> 'dtproperties' and d.name {inOrNot} ({tables}) 
+							LEFT OUTER JOIN (
+								SELECT
+									major_id,
+
+								VALUE
+
+								FROM
+									sys.extended_properties
+								WHERE
+									name = 'MS_Description'
+								AND minor_id = 0
+							) AS ddd ON a.id = ddd.major_id
+							LEFT JOIN sys.syscomments e ON a.cdefault = e.id
+							LEFT JOIN sys.extended_properties g ON a.id = g.major_id
+							AND a.colid = g.minor_id
+							ORDER BY
+								a.id,
+								a.colorder;";
+                var cmd = conn.CreateCommand();
+				cmd.CommandText = sql;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var table = reader["TABLE_NAME"].ToString();
+                        var column = reader["COLUMN_NAME"].ToString();
+                        var type =  reader["DATA_TYPE"].ToString();
+                        var comment = reader["COLUMN_COMMENT"].ToString();
+						 var isNullable = reader["IS_NULLABLE"].ToString();
+						  var position = reader["ORDINAL_POSITION"].ToString();
+						   var columnDefault = reader["COLUMN_DEFAULT"].ToString();
+						    var maximumLength = reader["CHARACTER_MAXIMUM_LENGTH"].ToString();
+							 var columnKey = reader["COLUMN_KEY"].ToString();
+							  var extra = reader["EXTRA"].ToString();
+							   
+                        var entity = list.FirstOrDefault(x => x.EntityName == table);
+                        if(entity == null)
+                        {
+                            entity = new Entity(table);
+                            var field = new Field
+                            {
+                                Name = column,
+                                Type = GetCLRType(type),
+                                Comment = comment,
+								IsNullable = isNullable,
+								Position =position,
+								ColumnDefault = columnDefault,
+								MaximumLength = maximumLength,
+								ColumnKey = columnKey,
+								Extra = extra
+                            };
+                            if (field.IsNullable == "YES" && !field.Type.EndsWith("?")) field.Type = field.Type + "?";
+                            entity.Fields.Add(field);
+                            list.Add(entity);
+                        }
+                        else
+                        {
+                            var field = new Field
+                            {
+                                Name = column,
+                                Type = GetCLRType(type),
+                                Comment = comment,
+								IsNullable = isNullable,
+								Position =position,
+								ColumnDefault = columnDefault,
+								MaximumLength = maximumLength,
+								ColumnKey = columnKey,
+								Extra = extra
+                            };
+                            if (field.IsNullable == "YES" && !field.Type.EndsWith("?")) field.Type = field.Type + "?";
+                            entity.Fields.Add(field);                            
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return list;
+        }
+
+        public static string GetCLRType(string dbType)
+        {
+            switch(dbType)
+            {
+                case "tinyint":
+                    return "byte?";
+                case "smallint":
+                    return "short";
+                case "mediumint":
+                case "int":
+                case "integer":
+                    return "int";
+			    case "bigint":
+                    return "int";
+                case "double":
+                    return "double";
+                case "float":
+                    return "double";
+                case "decimal":
+                case "numeric":
+                case "money":
+                case "real":
+                    return "decimal";
+                case "bit":
+                    return "bool";
+                case "date":
+                case "time":
+                case "year":
+                case "datetime":
+				case "datetime2":
+                case "smalldatetime":
+                case "timestamp":
+                    return "DateTime";
+                case "datetimeoffset":
+                    return "DateTime?";
+                case "tinyblob":
+                case "blob":
+                case "mediumblob":
+                case "longblog":
+                case "binary":
+                case "varbinary":
+                    return "byte[]";
+                case "nchar":
+                case "char":
+                case "varchar":                    
+				case "nvarchar":
+                case "xml":
+                case "tinytext":
+                case "ntext":
+                case "text":
+                case "mediumtext":
+                case "longtext":
+                    return "string";
+                case "uniqueidentifier":
+                    return "Guid";
+                case "point":
+                case "linestring":
+                case "polygon":
+                case "geometry":
+                case "multipoint":
+                case "multilinestring":
+                case "multipolygon":
+                case "geometrycollection":
+                case "enum":
+                case "set":
+                default:
+                    return dbType;
+            }
+        }
+    }
+
+    public class Entity
+    {
+        public Entity()
+        {
+            this.Fields = new List<Field>();
+        }
+
+        public Entity(string name)
+            : this()
+        {
+            this.EntityName = name;
+		    this.EntityComment = "";
+        }
+
+		public Entity(string name,string content)
+            : this()
+        {
+            this.EntityName = name;
+			this.EntityComment = content;
+        }
+
+        public string EntityName { get;set; }
+		public string EntityComment { get;set; }
+        public List<Field> Fields { get;set; }
+    }
+
+    public class Field
+    {
+        public string Name { get;set; }
+        public string Type { get;set; }
+        public string Comment { get;set; }
+		public string IsNullable { get;set; }
+		public string Position { get;set; }
+		public string ColumnDefault { get;set; }
+		public string MaximumLength { get;set; }
+		public string ColumnKey { get;set; }
+		public string Extra { get;set; } 
+
+    }
+	 
+#>

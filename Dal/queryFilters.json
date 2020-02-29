@@ -1,0 +1,8 @@
+﻿{
+  // 配置各表的两个过滤规则CorpFilter和UserFilter，一般只需要配置前者，需要支持非机构用户的(如采购商)则还需配置后者
+  // 如果不同AppID过滤的字段不同，可以配置1或n个字段，以及对应的n个AppID，用|号间隔；AppID配置为*号时，过滤的字段只能是一个字段
+  "Model.Role": "CorpFilter=CorpID,UserFilter=,AppID=*",
+  //"Model.SalesOrder": "CorpFilter=CorpID,UserFilter=CreateUserID,AppID=Customer"
+  //"Model.Inquiry": "CorpFilter=CorpID,UserFilter=,AppID=Customer"
+  // "Model.InquirySupplier": "CorpFilter=SupplierID,UserFilter=,AppID=Supplier"
+}

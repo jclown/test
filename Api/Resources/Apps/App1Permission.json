@@ -1,0 +1,61 @@
+﻿[
+  {
+    "name": "中科慈航",
+    "permissionCode": "ZKCH",
+    "icon": "icon-th",
+    "child": [
+      {
+        "name": "广州中科慈航",
+        "icon": "icon-minus-sign",
+        "permissionCode": "GZZKCH",
+        "parentCode": "ZKCH",
+        "child": [
+          {
+            "name": "广州中科慈航天河区分行",
+            "permissionCode": "GZZKCHTQFH",
+            "icon": "",
+            "parentCode": "GZZKCH",
+            "child": []
+          }
+        ]
+      },
+      {
+        "name": "北京中科慈航",
+        "icon": "",
+        "permissionCode": "BJZKCH",
+        "parentCode": "ZKCH",
+        "child": [
+          {
+            "name": "北京中科慈航中城区分行",
+            "permissionCode": "BJZKCHZCFH",
+            "icon": "",
+            "parentCode": "BJZKCH",
+            "child": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "中科科技",
+    "permissionCode": "ZKKJ",
+    "icon": "icon-th",
+    "child": [
+      {
+        "name": "广州中科科技",
+        "permissionCode": "GZZKKJ",
+        "icon": "icon-minus-sign",
+        "parentCode": "ZKKJ",
+        "child": [
+          {
+            "name": "广州天河中科科技",
+            "permissionCode": "GZTHZKKJ",
+            "icon": "",
+            "parentCode": "GZZKKJ",
+            "child": []
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,81 @@
+﻿<#@ template debug="True" hostspecific="true" language="C#"  #>
+<#@ output extension=".cs" #>
+<#@ assembly name="System.Core"#>
+<#@ import namespace="System"#>
+<#@ import namespace="System.Linq"#> 
+<#@ import namespace="System.Collections.Generic"#>
+<#@ include file="$(SolutionDir)\Model\T4Template\EntityHelperSql.ttinclude"#> 
+<#@ include file="$(SolutionDir)\Model\T4Template\MultiDocument.ttinclude"#>  
+<#
+ string inputFile = Host.ResolveAssemblyReference("$(SolutionDir)")+ @"\Model\DatabaseModel\MLSModel.txt"; 
+ var tables =string.Join(",", System.IO.File.ReadAllLines(inputFile).Select(x => string.Format("'{0}'", x))) ;
+ var manager = new Manager(Host, GenerationEnvironment, true) { OutputPath =Path.GetDirectoryName(Host.TemplateFile)};    
+ // 数据库连接 
+ var connectionString = EntityHelper.ConnectionString;
+ var inOrNot = "not in";  
+ //var entities= EntityHelper.GetTables(connectionString, inOrNot,tables);
+ var entities= EntityHelper.GetEntities(connectionString, inOrNot,tables);	
+ var entitiesConmmet= EntityHelper.GetTableComment(connectionString, inOrNot,tables);  
+#>using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using Model;  
+
+namespace Dal
+{
+    /// <summary>
+    /// 
+    /// </summary>
+	public partial class MLSDbContext : DbContextBase
+	{ 
+
+		public MLSDbContext(DbContextOptions<MLSDbContext> options) : base(options)
+        {
+            
+        }
+
+		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        { 
+            base.OnConfiguring(optionsBuilder);
+        }
+
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+<#		
+		var entities2 = entities.Where(x => x.Fields.Where(f => f.ColumnKey=="PRI").Count() > 1).ToList();
+		foreach(var entitie2 in entities2) 
+		{ 
+			var keys = entitie2.Fields.Where(f => f.ColumnKey=="PRI").Select(x => $"t.{x.Name}").ToList();
+			var keysString = string.Join(",",keys);
+#> 
+			modelBuilder.Entity<<#=entitie2.EntityName#>>().HasKey(t => new { <#=keysString#> });
+<#
+		}
+#> 
+			OnModelCreatingExt(modelBuilder);
+			base.OnModelCreating(modelBuilder);
+		}
+
+<#
+		foreach(var entitie in entities) { 
+		{ var commnetTb=entitiesConmmet.Where(x=>x.EntityName==entitie.EntityName).FirstOrDefault().EntityComment;
+#>  
+        ///<summary>
+		///<#=commnetTb#>
+		///</summary>
+        public DbSet<<#=entitie.EntityName#>> <#=entitie.EntityName#> { get; set; } 
+
+		///<summary>
+		///<#=commnetTb#>
+		///</summary>
+		public IQueryable<<#=entitie.EntityName#>> <#=entitie.EntityName#>Query=> <#=entitie.EntityName#>.AsNoTracking().AsQueryable();			
+ 	 	 
+<#
+		}}
+#>
+
+	}
+} 
+<#
+	//manager.EndBlock(); 
+	manager.Process(true);
+#>
