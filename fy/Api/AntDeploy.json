@@ -1,0 +1,125 @@
+﻿{
+  "Env": [
+    {
+      "Name": "home",
+      "ServerList": [
+        {
+          "Token": "123456",
+          "Host": "192.168.50.143:9293",
+          "NickName": "",
+          "IIsFireUrl": "",
+          "DockerFireUrl": null,
+          "WindowsServiceFireUrl": null
+        }
+      ],
+      "LinuxServerList": [],
+      "IgnoreList": [],
+      "WindowsBackUpIgnoreList": []
+    },
+    {
+      "Name": "modobay_test",
+      "ServerList": [
+        {
+          "Token": "m0d0bay",
+          "Host": "39.108.171.230:9293",
+          "NickName": "",
+          "IIsFireUrl": "http://39.108.171.230:9002/Sys/Check?code=modobayMLS",
+          "DockerFireUrl": null,
+          "WindowsServiceFireUrl": null
+        }
+      ],
+      "LinuxServerList": [],
+      "IgnoreList": [],
+      "WindowsBackUpIgnoreList": []
+    },
+    {
+      "Name": "modobay_prod",
+      "ServerList": [
+        {
+          "Token": "m0d0bay",
+          "Host": "39.108.171.230:9293",
+          "NickName": "",
+          "IIsFireUrl": "http://39.108.171.230:8091/Sys/Check?code=modobayMLS",
+          "DockerFireUrl": null,
+          "WindowsServiceFireUrl": null
+        },
+        {
+          "Token": "m0d0bay",
+          "Host": "120.77.254.128:9293",
+          "NickName": "",
+          "IIsFireUrl": "http://120.77.254.128:8091/Sys/Check?code=modobayMLS",
+          "DockerFireUrl": null,
+          "WindowsServiceFireUrl": null
+        },
+        {
+          "Token": "m0d0bay",
+          "Host": "120.78.161.123:9293",
+          "NickName": "",
+          "IIsFireUrl": "http://120.78.161.123:8091/Sys/Check?code=modobayMLS",
+          "DockerFireUrl": null,
+          "WindowsServiceFireUrl": null
+        }
+      ],
+      "LinuxServerList": [],
+      "IgnoreList": [],
+      "WindowsBackUpIgnoreList": []
+    }
+  ],
+  "IIsConfig": {
+    "SdkType": "netcore",
+    "WebSiteName": "testapi2.mlsfang.com",
+    "LastEnvName": "modobay_test",
+    "EnvPairList": [
+      {
+        "EnvName": "home",
+        "ConfigName": "api",
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null
+      },
+      {
+        "EnvName": "modobay_test",
+        "ConfigName": "testapi2.mlsfang.com",
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null
+      },
+      {
+        "EnvName": "modobay_prod",
+        "ConfigName": "api2.mlsfang.com",
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null
+      }
+    ]
+  },
+  "WindowsServiveConfig": {
+    "ServiceName": "",
+    "SdkType": null,
+    "LastEnvName": null,
+    "EnvPairList": [
+      {
+        "EnvName": "home",
+        "ConfigName": "",
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null
+      },
+      {
+        "EnvName": "modobay_test",
+        "ConfigName": "",
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null
+      }
+    ]
+  },
+  "DockerConfig": {
+    "Prot": "",
+    "AspNetCoreEnv": "",
+    "LastEnvName": null,
+    "RemoveDaysFromPublished": "10",
+    "Volume": "",
+    "EnvPairList": []
+  }
+}

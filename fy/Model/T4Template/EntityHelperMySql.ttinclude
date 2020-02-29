@@ -1,0 +1,268 @@
+﻿<#@ assembly name="System.Core"#>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.xml" #>
+<#@ assembly name="$(SolutionDir)\Lib\DLL\MySql.Data.Dll"  #>
+<#@ import namespace="System"#>
+<#@ import namespace="System.Collections.Generic"#>
+<#@ import namespace="System.Data"#>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Data.SqlClient"#>
+<#@ import namespace="MySql.Data.MySqlClient"#>
+<#+  
+	public class EntityHelper
+    {
+	  
+
+	     public static List<Entity> GetTableComment(string connectionString, List<string> databases,string tables)
+        {
+            var list = new List<Entity>();
+            var conn = new MySqlConnection(connectionString);
+            try
+            {
+                conn.Open(); 
+                var dbs = string.Join("','", databases.ToArray());
+                var cmd = string.Format(@"select  TABLE_NAME,TABLE_COMMENT from information_schema.TABLES where TABLE_SCHEMA IN ('{0}') and TABLE_NAME in  ({1}) ", dbs,tables);
+                using (var reader = MySqlHelper.ExecuteReader(conn, cmd))
+                {
+                    while (reader.Read())
+                    { 
+                        var table = reader["TABLE_NAME"].ToString(); 
+						var tablecommnet = reader["TABLE_COMMENT"].ToString(); 
+                        var entity = list.FirstOrDefault(x => x.EntityName == table);
+                        if(entity == null)
+                        {
+                            entity = new Entity(table,tablecommnet); 
+                            list.Add(entity);
+                        } 
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return list;
+        }
+
+
+
+	   public static List<Entity> GetTables(string connectionString, List<string> databases,string tables)
+        {
+            var list = new List<Entity>();
+            var conn = new MySqlConnection(connectionString);
+            try
+            {
+                conn.Open();
+                var dbs = string.Join("','", databases.ToArray());
+                var cmd = string.Format(@"SELECT `information_schema`.`COLUMNS`.`TABLE_SCHEMA`
+                                                    ,`information_schema`.`COLUMNS`.`TABLE_NAME` 
+                                                FROM `information_schema`.`COLUMNS`
+                                                WHERE `information_schema`.`COLUMNS`.`TABLE_SCHEMA` IN ('{0}')  and table_name in  ({1}) ", dbs,tables);
+                using (var reader = MySqlHelper.ExecuteReader(conn, cmd))
+                {
+                    while (reader.Read())
+                    {
+                        var db = reader["TABLE_SCHEMA"].ToString();
+                        var table = reader["TABLE_NAME"].ToString(); 
+                        var entity = list.FirstOrDefault(x => x.EntityName == table);
+                        if(entity == null)
+                        {
+                            entity = new Entity(table); 
+                            list.Add(entity);
+                        } 
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return list;
+        }
+
+
+
+        public static List<Entity> GetEntities(string connectionString, List<string> databases,string tables)
+        {
+            var list = new List<Entity>();
+            var conn = new MySqlConnection(connectionString);
+            try
+            {
+                conn.Open();
+                var dbs = string.Join("','", databases.ToArray());
+                var cmd = string.Format(@"SELECT `information_schema`.`COLUMNS`.`TABLE_SCHEMA`
+                                                    ,`information_schema`.`COLUMNS`.`TABLE_NAME`
+                                                    ,`information_schema`.`COLUMNS`.`COLUMN_NAME`
+                                                    ,`information_schema`.`COLUMNS`.`DATA_TYPE`
+                                                    ,`information_schema`.`COLUMNS`.`COLUMN_COMMENT`
+													 ,`information_schema`.`COLUMNS`.`IS_NULLABLE`
+													  ,`information_schema`.`COLUMNS`.`ORDINAL_POSITION`
+													   ,`information_schema`.`COLUMNS`.`COLUMN_DEFAULT`
+													    ,`information_schema`.`COLUMNS`.`CHARACTER_MAXIMUM_LENGTH`
+														 ,`information_schema`.`COLUMNS`.`COLUMN_KEY`
+														  ,`information_schema`.`COLUMNS`.`EXTRA` 
+                                                FROM `information_schema`.`COLUMNS`
+                                                WHERE `information_schema`.`COLUMNS`.`TABLE_SCHEMA` IN ('{0}')  and table_name in  ({1}) ", dbs,tables);
+                using (var reader = MySqlHelper.ExecuteReader(conn, cmd))
+                {
+                    while (reader.Read())
+                    {
+                        var db = reader["TABLE_SCHEMA"].ToString();
+                        var table = reader["TABLE_NAME"].ToString();
+                        var column = reader["COLUMN_NAME"].ToString();
+                        var type =  reader["DATA_TYPE"].ToString();
+                        var comment = reader["COLUMN_COMMENT"].ToString();
+						 var isNullable = reader["IS_NULLABLE"].ToString();
+						  var position = reader["ORDINAL_POSITION"].ToString();
+						   var columnDefault = reader["COLUMN_DEFAULT"].ToString();
+						    var maximumLength = reader["CHARACTER_MAXIMUM_LENGTH"].ToString();
+							 var columnKey = reader["COLUMN_KEY"].ToString();
+							  var extra = reader["EXTRA"].ToString();
+							   
+                        var entity = list.FirstOrDefault(x => x.EntityName == table);
+                        if(entity == null)
+                        {
+                            entity = new Entity(table);
+                            entity.Fields.Add(new Field
+                            {
+                                Name = column,
+                                Type = GetCLRType(type),
+                                Comment = comment,
+								IsNullable = isNullable,
+								Position =position,
+								ColumnDefault = columnDefault,
+								MaximumLength = maximumLength,
+								ColumnKey = columnKey,
+								Extra = extra
+                            });
+                            
+                            list.Add(entity);
+                        }
+                        else
+                        {
+                            entity.Fields.Add(new Field
+                            {
+                                Name = column,
+                                Type = GetCLRType(type),
+                                Comment = comment,
+								IsNullable = isNullable,
+								Position =position,
+								ColumnDefault = columnDefault,
+								MaximumLength = maximumLength,
+								ColumnKey = columnKey,
+								Extra = extra
+                            });
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return list;
+        }
+
+        public static string GetCLRType(string dbType)
+        {
+            switch(dbType)
+            {
+                case "tinyint":
+                case "smallint":
+                case "mediumint":
+                case "int":
+                case "integer":
+                    return "int";
+			    case "bigint":
+                    return "int";
+                case "double":
+                    return "double";
+                case "float":
+                    return "float";
+                case "decimal":
+                    return "decimal";
+                case "numeric":
+                case "real":
+                    return "decimal";
+                case "bit":
+                    return "bool";
+                case "date":
+                case "time":
+                case "year":
+                case "datetime":
+                case "timestamp":
+                    return "DateTime";
+                case "tinyblob":
+                case "blob":
+                case "mediumblob":
+                case "longblog":
+                case "binary":
+                case "varbinary":
+                    return "byte[]";
+                case "char":
+                case "varchar":                    
+                case "tinytext":
+                case "text":
+                case "mediumtext":
+                case "longtext":
+                    return "string";
+                case "point":
+                case "linestring":
+                case "polygon":
+                case "geometry":
+                case "multipoint":
+                case "multilinestring":
+                case "multipolygon":
+                case "geometrycollection":
+                case "enum":
+                case "set":
+                default:
+                    return dbType;
+            }
+        }
+    }
+
+    public class Entity
+    {
+        public Entity()
+        {
+            this.Fields = new List<Field>();
+        }
+
+        public Entity(string name)
+            : this()
+        {
+            this.EntityName = name;
+		    this.EntityComment = "";
+        }
+
+		public Entity(string name,string content)
+            : this()
+        {
+            this.EntityName = name;
+			this.EntityComment = content;
+        }
+
+        public string EntityName { get;set; }
+		public string EntityComment { get;set; }
+        public List<Field> Fields { get;set; }
+    }
+
+    public class Field
+    {
+        public string Name { get;set; }
+        public string Type { get;set; }
+        public string Comment { get;set; }
+		public string IsNullable { get;set; }
+		public string Position { get;set; }
+		public string ColumnDefault { get;set; }
+		public string MaximumLength { get;set; }
+		public string ColumnKey { get;set; }
+		public string Extra { get;set; } 
+
+    }
+	 
+#>

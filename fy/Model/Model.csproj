@@ -1,0 +1,71 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\publish\Model.xml</DocumentationFile>
+	  <OutputPath>bin\publish\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Validation\**" />
+    <EmbeddedResource Remove="Validation\**" />
+    <None Remove="Validation\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="DatabaseModel\FyModel.tt">
+      <LastGenOutput>FyModel.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="DatabaseModel\MLSModelNew.tt">
+      <LastGenOutput>MLSModel.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="DatabaseModel\MLSModel.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MLSModelNew - 复制.cs</LastGenOutput>
+    </None>
+    <None Update="_EcportalModel.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="_StandardModel.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>_StandardModel.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="DatabaseModel\MLSModel - 复制.cs">
+      <DependentUpon>MLSModel.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="DatabaseModel\FyModel.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>FyModel.tt</DependentUpon>
+    </Compile>
+    <Compile Update="_EcportalModel.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>_EcportalModel.tt</DependentUpon>
+    </Compile>
+    <Compile Update="_StandardModel.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>_StandardModel.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

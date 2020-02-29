@@ -1,0 +1,60 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#"  #>
+<#@ output extension=".cs" #>
+<#@ assembly name="System.Core"#>
+<#@ import namespace="System"#>
+<#@ import namespace="System.Collections.Generic"#>
+<#@ include file="..\T4Template\EntityHelperSql.ttinclude"#> 
+<#@ include file="..\T4Template\MultiDocument.ttinclude"#>  
+<#  
+  string inputFile = Host.ResolveAssemblyReference("$(ProjectDir)")+ @"\DatabaseModel\FyModel.txt"; 
+  var tables =string.Join(",", System.IO.File.ReadAllLines(inputFile).Select(x => string.Format("'{0}'", x))) ;
+  var manager = new Manager(Host, GenerationEnvironment, true) { OutputPath =Host.ResolveAssemblyReference("$(ProjectDir)")};  
+  // 数据库连接 
+  //var connectionString = @"Data Source=192.168.0.134;Database=ModobayDB_Test;user id=sa;password=123456;Connect Timeout=900000;";  
+  var connectionString = EntityHelper.ConnectionString;
+  var inOrNot = "in";  
+  var entities= EntityHelper.GetEntities(connectionString, inOrNot,tables);
+  // System.Diagnostics.Debugger.Launch();
+  var en = entities.FirstOrDefault(x => x.EntityName == "ChineseCommunityFeatures");
+  var entitiesConmmet= EntityHelper.GetTableComment(connectionString, inOrNot,tables); 
+  foreach(var entitie in entities) 
+  { 
+        var tableName=entitie.EntityName;		
+		manager.StartBlock(tableName+".cs"); 
+		var commnetTb=entitiesConmmet.Where(x=>x.EntityName==tableName).FirstOrDefault().EntityComment;
+#>using System;
+using System.Collections.Generic; 
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel;
+
+namespace Model
+{ 
+    /// <summary>
+    /// <#=commnetTb#>
+    /// </summary>
+	public partial class <#=tableName#>
+	{	 
+<#
+		foreach(var c in entitie.Fields)
+		{ 
+#>          
+            /// <summary> 
+		    /// <#=(c.Comment??"").Replace("\r", "").Replace("\n", "")#>
+            /// </summary>
+<#if(c.ColumnKey=="PRI"){WriteLine("		    [Key] // 主键"); } #>
+<#if(c.Extra=="auto_increment"){WriteLine("		    [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // 自增"); } #>
+<#if(c.Type=="bool"){WriteLine("		    [Column(TypeName = \"bit\")]"); } #>
+            [Description("<#=(c.Comment??"").Replace("\r", "").Replace("\n", "")#>")]			
+		    public <#=c.Type#> <#=c.Name#> { get; set; } 
+<#
+		}
+#>		 
+	}
+}
+<#
+		// System.Diagnostics.Debugger.Launch();
+		manager.EndBlock();
+	}   
+	manager.Process(true);
+#>
